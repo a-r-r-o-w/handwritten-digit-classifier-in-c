@@ -1,6 +1,7 @@
 # python directories
 .venv/
 __pycache__/
+*.model
 
 # environment files
 .env
