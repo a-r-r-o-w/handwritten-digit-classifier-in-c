@@ -3,5 +3,13 @@
 __pycache__/
 *.model
 
+# vscode
+.vscode/
+
+# build
+build/
+*.out
+*.s
+
 # environment files
 .env
