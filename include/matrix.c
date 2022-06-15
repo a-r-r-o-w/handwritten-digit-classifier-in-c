@@ -106,7 +106,7 @@ bool matrix_isequal (const matrix_t* m, const matrix_t* n) {
   if (m->rows != n->rows || m->cols != n->cols)
     return false;
   for (int i = 0; i < m->rows * m->cols; ++i)
-    if (fabs(m->values[i] - n->values[i]) > epsilon)
+    if (fabsl(m->values[i] - n->values[i]) > epsilon)
       return false;
   return true;
 }
