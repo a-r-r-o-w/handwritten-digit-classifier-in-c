@@ -13,3 +13,6 @@ build/
 
 # environment files
 .env
+
+# datasets
+*.csv
