@@ -28,5 +28,6 @@ void mnist_display_train_image          (mnist_t*, int);
 void mnist_display_random_test_image    (mnist_t*);
 void mnist_display_random_train_image   (mnist_t*);
 void mnist_load                         (mnist_t*);
+void mnist_normalize                    (mnist_t*);
 
 #endif // HDC_MNIST_H

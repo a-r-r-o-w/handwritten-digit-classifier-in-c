@@ -13,9 +13,9 @@ void mnist_constructor (mnist_t* m) {
   m->test_images = (matrix_t*)malloc(m->test_size * sizeof(matrix_t));
   
   for (int i = 0; i < m->train_size; ++i)
-    matrix_constructor(&m->train_images[i], 28, 28, 0);
+    matrix_constructor(m->train_images + i, MNIST_IMAGE_HEIGHT, MNIST_IMAGE_WIDTH, 0);
   for (int i = 0; i < m->test_size; ++i)
-    matrix_constructor(&m->test_images[i], 28, 28, 0);
+    matrix_constructor(m->test_images + i, MNIST_IMAGE_HEIGHT, MNIST_IMAGE_WIDTH, 0);
 
   matrix_constructor(&m->train_labels, 1, m->train_size, 0);
   matrix_constructor(&m->test_labels, 1, m->test_size, 0);
@@ -29,8 +29,10 @@ void mnist_destructor (mnist_t* m) {
   for (int i = 0; i < m->test_size; ++i)
     matrix_destructor(m->test_images + i);
   for (int i = 0; i < m->train_size; ++i)
-    matrix_destructor(&m->train_images[i]);
+    matrix_destructor(m->train_images + i);
   
+  free(m->test_images);
+  free(m->train_images);
   m->test_images = NULL;
   m->train_images = NULL;
   m->test_size = 0;
@@ -46,7 +48,7 @@ void mnist_display_image (matrix_t* img, int label) {
   for (int i = 0; i < MNIST_IMAGE_HEIGHT; ++i) {
     for (int j = 0; j < MNIST_IMAGE_WIDTH; ++j) {
       int value = matrix_get(img, i, j);
-      printf("\x1b[38;2;%d;%d;%dm  \x1b[0m", value, value, value);
+      printf("\x1b[48;2;%d;%d;%dm  \x1b[0m", value, value, value);
     }
     puts("");
   }
@@ -54,15 +56,19 @@ void mnist_display_image (matrix_t* img, int label) {
 
 // Display a mnist digit image from the testing dataset
 void mnist_display_test_image (mnist_t* m, int index) {
+#ifdef DEBUG_MODE
   if (index >= m->test_size)
     error("out of bounds access for testing dataset");
+#endif
   mnist_display_image(&m->test_images[index], m->test_labels.values[index]);
 }
 
 // Display a mnist digit image from the training dataset
 void mnist_display_train_image (mnist_t* m, int index) {
+#ifdef DEBUG_MODE
   if (index >= m->train_size)
     error("out of bounds access for training dataset");
+#endif
   mnist_display_image(&m->train_images[index], m->train_labels.values[index]);
 }
 
@@ -136,4 +142,12 @@ void mnist_load (mnist_t* m) {
 
     fclose(stream);
   }
+}
+
+void mnist_normalize (mnist_t* m) {
+  const long double scaling_factor = 1.0 / 255.0;
+  for (int i = 0; i < m->train_size; ++i)
+    matrix_scale(m->train_images + i, scaling_factor);
+  for (int i = 0; i < m->test_size; ++i)
+    matrix_scale(m->test_images + i, scaling_factor);
 }
