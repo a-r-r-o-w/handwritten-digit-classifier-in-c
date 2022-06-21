@@ -16,6 +16,8 @@ static const int epsilon = 1e-9;
 void           matrix_scalar_add        (matrix_t*, long double);
 void           matrix_add               (matrix_t*, const matrix_t*);
 void           matrix_apply             (matrix_t*, long double (*) (long double));
+void           matrix_apply_from        (const matrix_t*, matrix_t*, long double (*) (long double));
+void           matrix_assign            (const matrix_t*, matrix_t*);
 void           matrix_constructor       (matrix_t*, int, int, long double);
 void           matrix_copy              (const matrix_t*, matrix_t*);
 void           matrix_destructor        (matrix_t*);
