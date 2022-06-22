@@ -5,34 +5,50 @@
 #include "matrix.h"
 #include "mnist.h"
 
+static int argmax (long double* array, int size) {
+  int max_index = 0;
+  for (int i = 0; i < size; ++i)
+    if (array[max_index] < array[i])
+      max_index = i;
+  return max_index;
+}
+
 // Construct a mnist object and allocate necessary memory
 void mnist_constructor (mnist_t* m) {
   m->train_size = TRAINING_DATASET_SIZE;
   m->test_size = TESTING_DATASET_SIZE;
   m->train_images = (matrix_t*)malloc(m->train_size * sizeof(matrix_t));
   m->test_images = (matrix_t*)malloc(m->test_size * sizeof(matrix_t));
+  m->train_labels = (matrix_t*)malloc(m->train_size * sizeof(matrix_t));
+  m->test_labels = (matrix_t*)malloc(m->test_size * sizeof(matrix_t));
   
   for (int i = 0; i < m->train_size; ++i)
     matrix_constructor(m->train_images + i, MNIST_IMAGE_HEIGHT, MNIST_IMAGE_WIDTH, 0);
   for (int i = 0; i < m->test_size; ++i)
     matrix_constructor(m->test_images + i, MNIST_IMAGE_HEIGHT, MNIST_IMAGE_WIDTH, 0);
-
-  matrix_constructor(&m->train_labels, 1, m->train_size, 0);
-  matrix_constructor(&m->test_labels, 1, m->test_size, 0);
+  for (int i = 0; i < m->train_size; ++i)
+    matrix_constructor(m->train_labels + i, 1, 10, 0);
+  for (int i = 0; i < m->test_size; ++i)
+    matrix_constructor(m->test_labels + i, 1, 10, 0);
 }
 
 // Destruct a mnist object and free up allocated memory
 void mnist_destructor (mnist_t* m) {
-  matrix_destructor(&m->test_labels);
-  matrix_destructor(&m->train_labels);
-
+  for (int i = 0; i < m->test_size; ++i)
+    matrix_destructor(m->test_labels + i);
+  for (int i = 0; i < m->train_size; ++i)
+    matrix_destructor(m->train_labels + i);
   for (int i = 0; i < m->test_size; ++i)
     matrix_destructor(m->test_images + i);
   for (int i = 0; i < m->train_size; ++i)
     matrix_destructor(m->train_images + i);
   
+  free(m->test_labels);
+  free(m->train_labels);
   free(m->test_images);
   free(m->train_images);
+  m->test_labels = NULL;
+  m->train_labels = NULL;
   m->test_images = NULL;
   m->train_images = NULL;
   m->test_size = 0;
@@ -60,7 +76,9 @@ void mnist_display_test_image (mnist_t* m, int index) {
   if (index >= m->test_size)
     error("out of bounds access for testing dataset");
 #endif
-  mnist_display_image(&m->test_images[index], m->test_labels.values[index]);
+
+  int label = argmax(m->test_labels[index].values, 10);
+  mnist_display_image(&m->test_images[index], label);
 }
 
 // Display a mnist digit image from the training dataset
@@ -69,19 +87,23 @@ void mnist_display_train_image (mnist_t* m, int index) {
   if (index >= m->train_size)
     error("out of bounds access for training dataset");
 #endif
-  mnist_display_image(&m->train_images[index], m->train_labels.values[index]);
+  
+  int label = argmax(m->train_labels[index].values, 10);
+  mnist_display_image(&m->train_images[index], label);
 }
 
 // Display a random mnist digit image from the testing dataset
 void mnist_display_random_test_image (mnist_t* m) {
   int r = rand() % m->test_size;
-  mnist_display_image(&m->test_images[r], m->test_labels.values[r]);
+  int label = argmax(m->test_labels[r].values, 10);
+  mnist_display_image(&m->test_images[r], label);
 }
 
 // Display a random mnist digit image from the training dataset
 void mnist_display_random_train_image (mnist_t* m) {
   int r = rand() % m->train_size;
-  mnist_display_image(&m->train_images[r], m->train_labels.values[r]);
+  int label = argmax(m->train_labels[r].values, 10);
+  mnist_display_image(&m->train_images[r], label);
 }
 
 // Load the mnist dataset
@@ -102,7 +124,7 @@ void mnist_load (mnist_t* m) {
     for (int i = 0; i < m->train_size; ++i) {
       // the first column contains the image label
       fscanf(stream, "%d,", &value);
-      m->train_labels.values[i] = value;
+      m->train_labels[i].values[value] = 1;
 
       // the remaining columns contain image data
       for (int j = 0; j < MNIST_IMAGE_SIZE - 1; ++j) {
@@ -129,7 +151,7 @@ void mnist_load (mnist_t* m) {
     for (int i = 0; i < m->test_size; ++i) {
       // the first column contains the image label
       fscanf(stream, "%d,", &value);
-      m->test_labels.values[i] = value;
+      m->test_labels[i].values[value] = 1;
 
       // the remaining columns contain image data
       for (int j = 0; j < MNIST_IMAGE_SIZE - 1; ++j) {

@@ -16,8 +16,8 @@ struct mnist {
   int test_size;
   matrix_t* train_images;
   matrix_t* test_images;
-  matrix_t train_labels;
-  matrix_t test_labels;
+  matrix_t* train_labels;
+  matrix_t* test_labels;
 };
 
 void mnist_constructor                  (mnist_t*);
