@@ -37,6 +37,7 @@ int main () {
   free(y[1]);
   matrix_fromarray_1D(&p, z, 2, 2);
   matrix_scale(&p, -24.0);
+  matrix_constructor(&r, 2, 2, 0);
   matrix_dot(&r, &m, &n);
   TEST("matrix dot product", matrix_isequal(&p, &r));
 
@@ -44,6 +45,12 @@ int main () {
   matrix_apply(&m, f2);
   matrix_fromarray_1D(&q, z, 2, 2);
   TEST("matrix addition", matrix_isequal(&m, &q));
+
+  matrix_destructor(&r);
+  matrix_destructor(&q);
+  matrix_destructor(&p);
+  matrix_destructor(&n);
+  matrix_destructor(&m);
 
   test_stats();
 
