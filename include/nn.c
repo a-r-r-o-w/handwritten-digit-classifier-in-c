@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "error_handler.h"
 #include "mnist.h"
@@ -21,6 +22,11 @@ static long double random_value () {
   r /= RAND_MAX;
   r = 2 * r - 1;
   return r;
+}
+
+static bool file_exists (const char* filename) {
+  struct stat buffer;
+  return stat(filename, &buffer) == 0;
 }
 
 // Construct a neural network layer
@@ -169,6 +175,40 @@ void network_forward_propagate (layer_t* from, layer_t* to) {
   matrix_apply_from(&to->z, &to->activation, to->activation_function);
 }
 
+void network_load (network_t* network, const char* filename) {
+  puts("[*] Loading saved model");
+
+  if (!file_exists(filename))
+    error("saved model could not be found with the provided filename");
+
+  FILE* file = fopen(filename, "rb");
+  char buffer[256];
+  long double value;
+
+  for (int i = 1; i < network->layer_count; ++i) {
+    layer_t* layer = network->layers + i;
+
+    fscanf(file, "%[^\n]s", buffer);
+    printf("[*] reading %s\n", buffer);
+
+    for (int j = 0; j < layer->neuron_count; ++j) {
+      fscanf(file, "%Lf\n", &value);
+      layer->bias.values[j] = value;
+    }
+
+    fscanf(file, "%[^\n]s", buffer);
+    printf("[*] reading %s\n", buffer);
+
+    for (int j = 0; j < layer->weight.rows; ++j)
+      for (int k = 0; k < layer->weight.cols; ++k) {
+        fscanf(file, "%Lf\n", &value);
+        matrix_set(&layer->weight, j, k, value);
+      }
+  }
+
+  fclose(file);
+}
+
 // Predict a label for an image using a trained neural network
 int network_predict (network_t* network, matrix_t* img) {
   // holds the flattened 28x28 image data in an array of size 784
@@ -194,8 +234,30 @@ void network_randomize (network_t* network) {
     layer_randomize(network->layers + i);
 }
 
+void network_save (network_t* network, const char* filename) {
+  puts("[*] Saving model to file \"hdc.model\"");
+
+  FILE* file = fopen(filename, "w");
+
+  for (int i = 1; i < network->layer_count; ++i) {
+    layer_t* layer = network->layers + i;
+
+    fprintf(file, "[layer %d bias]\n", i);
+    for (int j = 0; j < layer->neuron_count; ++j)
+      fprintf(file, "%.20Lf%c", layer->bias.values[j], " \n"[j == layer->neuron_count - 1]);
+    fprintf(file, "[layer %d weights]\n", i);
+    for (int j = 0; j < layer->weight.rows; ++j)
+      for (int k = 0; k < layer->weight.cols; ++k)
+        fprintf(file, "%.20Lf%c", matrix_get(&layer->weight, j, k), " \n"[k == layer->weight.cols - 1]);
+  }
+
+  fclose(file);
+}
+
 // Test the neural network
 int network_test (network_t* network, const mnist_t* mnist) {
+  puts("[*] Testing neural network");
+
   int correct_predictions = 0;
 
   // test the network on the testing dataset and collect the predictions
