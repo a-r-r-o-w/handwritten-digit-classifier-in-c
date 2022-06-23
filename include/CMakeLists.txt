@@ -4,4 +4,5 @@ add_library(
     matrix.c
     mnist.c
     nn.c
+    utils.c
 )
