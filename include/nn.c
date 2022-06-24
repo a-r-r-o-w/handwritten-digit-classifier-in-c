@@ -1,33 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 
 #include "error_handler.h"
 #include "mnist.h"
 #include "nn.h"
-
-// helper function to find the index of the maximum value in an array
-static int argmax (long double* array, int size) {
-  int max_index = 0;
-  for (int i = 0; i < size; ++i)
-    if (array[max_index] < array[i])
-      max_index = i;
-  return max_index;
-}
-
-// helper function to return a random value in range [-1, 1]
-// note: produces only RAND_MAX different values
-static long double random_value () {
-  long double r = rand();
-  r /= RAND_MAX;
-  r = 2 * r - 1;
-  return r;
-}
-
-static bool file_exists (const char* filename) {
-  struct stat buffer;
-  return stat(filename, &buffer) == 0;
-}
+#include "utils.h"
 
 // Construct a neural network layer
 void layer_constructor (layer_t* layer, layer_t* previous_layer, int neuron_count, long double (*activation_function) (long double),
