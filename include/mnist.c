@@ -4,14 +4,7 @@
 #include "error_handler.h"
 #include "matrix.h"
 #include "mnist.h"
-
-static int argmax (long double* array, int size) {
-  int max_index = 0;
-  for (int i = 0; i < size; ++i)
-    if (array[max_index] < array[i])
-      max_index = i;
-  return max_index;
-}
+#include "utils.h"
 
 // Construct a mnist object and allocate necessary memory
 void mnist_constructor (mnist_t* m) {
@@ -108,8 +101,15 @@ void mnist_display_random_train_image (mnist_t* m) {
 
 // Load the mnist dataset
 void mnist_load (mnist_t* m) {
+  puts("[*] Initialising from MNIST dataset");
+
   char mnist_train[] = "../res/datasets/mnist_train.csv";
   char mnist_test[] = "../res/datasets/mnist_test.csv";
+
+  if (!file_exists(mnist_train))
+    error("missing mnist training dataset in location res/datasets/mnist_train.csv");
+  if (!file_exists(mnist_test))
+    error("missing mnist training dataset in location res/datasets/mnist_test.csv");
   
   // load the mnist training dataset
   {
@@ -137,6 +137,8 @@ void mnist_load (mnist_t* m) {
 
     fclose(stream);
   }
+  
+  puts("[*] Loading MNIST training dataset completed");
 
   // load the mnist testing dataset
   {
@@ -164,6 +166,8 @@ void mnist_load (mnist_t* m) {
 
     fclose(stream);
   }
+
+  puts("[*] Loading MNIST testing dataset completed");
 }
 
 void mnist_normalize (mnist_t* m) {
